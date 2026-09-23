@@ -1,0 +1,97 @@
+name: iOS Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: 'Unique build identifier'
+        required: true
+        type: string
+        default: 'note_app_build_01'
+      configuration:
+        description: 'Build configuration (Debug is faster, Release for production)'
+        required: false
+        type: string
+        default: 'Debug'
+      flutter_version:
+        description: 'Flutter version to use (e.g., 3.29.0). Empty means latest stable.'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ inputs.flutter_version || '' }}
+          channel: 'stable'
+          cache: true
+
+      - name: Flutter pub get
+        run: |
+          flutter pub get
+
+      - name: Build IPA
+        env:
+          BUILD_ID: ${{ inputs.build_id }}
+          CONFIGURATION: ${{ inputs.configuration }}
+        run: |
+          set -e
+
+          # Tiến hành chạy lệnh build Flutter iOS không cần chứng chỉ Apple ký trước
+          if [ "$CONFIGURATION" = "Debug" ]; then
+            echo "Building Flutter iOS Debug..."
+            flutter build ios --debug --no-codesign
+          else
+            echo "Building Flutter iOS Release..."
+            flutter build ios --release --no-codesign
+          fi
+
+          # Tự động tìm kiếm file ứng dụng .app vừa build xong
+          APP_PATH=$(find "build/ios/iphoneos" -name "*.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: Could not find .app"
+            exit 1
+          fi
+          echo "Found app at: $APP_PATH"
+
+          # Tạo thư mục và nén thành file cài đặt định dạng .ipa chuẩn iOS
+          mkdir -p build_output/Payload
+          cp -R "$APP_PATH" build_output/Payload/
+          cd build_output
+          zip -rq "$BUILD_ID.ipa" Payload
+          rm -rf Payload
+          echo "Created unsigned IPA: build_output/$BUILD_ID.ipa"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipa-package
+          path: build_output/*.ipa
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Build summary
+        if: always()
+        env:
+          CONFIGURATION: ${{ inputs.configuration }}
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build ID:** ${{ inputs.build_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Configuration:** $CONFIGURATION" >> $GITHUB_STEP_SUMMARY
+          echo "- **Signing:** Unsigned (Hãy dùng AltStore / Sideloadly hoặc TrollStore cài lên điện thoại để test nhé)" >> $GITHUB_STEP_SUMMARY
