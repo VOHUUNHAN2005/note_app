@@ -11,11 +11,7 @@ class NoteEditorScreen extends StatefulWidget {
   final Note? note;
   final List<Topic> topics;
 
-  const NoteEditorScreen({
-    super.key,
-    this.note,
-    required this.topics,
-  });
+  const NoteEditorScreen({super.key, this.note, required this.topics});
 
   @override
   State<NoteEditorScreen> createState() => _NoteEditorScreenState();
@@ -25,7 +21,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _webUrlController = TextEditingController();
-  
+
   late quill.QuillController _quillController;
   final FocusNode _editorFocusNode = FocusNode();
 
@@ -34,14 +30,19 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   final ImagePicker _picker = ImagePicker();
 
   final List<Color> _availableColors = [
-    Colors.blue, Colors.red, Colors.green,
-    Colors.amber, Colors.purple, Colors.teal, Colors.orange,
+    Colors.blue,
+    Colors.red,
+    Colors.green,
+    Colors.amber,
+    Colors.purple,
+    Colors.teal,
+    Colors.orange,
   ];
 
   @override
   void initState() {
     super.initState();
-    
+
     _quillController = quill.QuillController.basic();
 
     if (widget.note != null) {
@@ -51,7 +52,8 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _imagePaths = List.from(widget.note!.imagePaths);
 
       if (widget.note!.content.isNotEmpty) {
-        _quillController.document = quill.Document()..insert(0, widget.note!.content);
+        _quillController.document = quill.Document()
+          ..insert(0, widget.note!.content);
       }
     }
   }
@@ -96,14 +98,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                     const SizedBox(height: 16),
                     const Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('Màu đại diện:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'Màu đại diện:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       children: _availableColors.map((color) {
                         return GestureDetector(
-                          onTap: () => setDialogState(() => selectedColor = color),
+                          onTap: () =>
+                              setDialogState(() => selectedColor = color),
                           child: Container(
                             width: 36,
                             height: 36,
@@ -111,7 +117,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                               color: color,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: selectedColor == color ? Colors.black : Colors.transparent,
+                                color: selectedColor == color
+                                    ? Colors.black
+                                    : Colors.transparent,
                                 width: 3,
                               ),
                             ),
@@ -158,13 +166,18 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
   Future<String> _saveImageToAppDirectory(String originalPath) async {
     final directory = await getApplicationDocumentsDirectory();
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(originalPath)}';
-    final savedImage = await File(originalPath).copy('${directory.path}/$fileName');
+    final fileName =
+        '${DateTime.now().millisecondsSinceEpoch}_${p.basename(originalPath)}';
+    final savedImage = await File(
+      originalPath,
+    ).copy('${directory.path}/$fileName');
     return savedImage.path;
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
     if (pickedFile != null) {
       final localImagePath = await _saveImageToAppDirectory(pickedFile.path);
       setState(() => _imagePaths.add(localImagePath));
@@ -185,7 +198,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
 
     final title = _titleController.text.trim();
     final content = _quillController.document.toPlainText().trim();
-    final webUrl = _webUrlController.text.trim().isEmpty ? null : _webUrlController.text.trim();
+    final webUrl = _webUrlController.text.trim().isEmpty
+        ? null
+        : _webUrlController.text.trim();
 
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -234,7 +249,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             children: [
               TextFormField(
                 controller: _titleController,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
                 decoration: const InputDecoration(
                   hintText: 'Tiêu đề ghi chú *',
                   border: InputBorder.none,
@@ -258,16 +276,23 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                           value: topic,
                           child: Row(
                             children: [
-                              CircleAvatar(backgroundColor: topic.color, radius: 8),
+                              CircleAvatar(
+                                backgroundColor: topic.color,
+                                radius: 8,
+                              ),
                               const SizedBox(width: 8),
                               Text(topic.name),
                             ],
                           ),
                         );
                       }).toList(),
-                      onChanged: (value) => setState(() => _selectedTopic = value),
+                      onChanged: (value) =>
+                          setState(() => _selectedTopic = value),
                       decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         border: OutlineInputBorder(),
                       ),
                       validator: (value) {
@@ -295,7 +320,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
-                  if (value != null && value.trim().isNotEmpty && !_isValidUrl(value)) {
+                  if (value != null &&
+                      value.trim().isNotEmpty &&
+                      !_isValidUrl(value)) {
                     return 'Đường dẫn URL không hợp lệ!';
                   }
                   return null;
@@ -306,7 +333,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               Container(
                 decoration: BoxDecoration(
                   color: Colors.grey.shade100,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(8),
+                  ),
                   border: Border.all(color: Colors.grey.shade400),
                 ),
                 child: quill.QuillSimpleToolbar(
@@ -317,17 +346,29 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                     showUnderLineButton: true,
                     showListBullets: true,
                     showListNumbers: true,
+                    showFontFamily: false,
+                    showFontSize: false,
+                    showHeaderStyle: false,
                     showAlignmentButtons: false,
-                    showColorButton: false,
-                    showBackgroundColorButton: false,
-                    showClearFormat: false,
+                    showDirection: false,
+                    showListCheck: false,
                     showCodeBlock: false,
                     showInlineCode: false,
                     showQuote: false,
-                    showSearchButton: false,
+                    showIndent: false,
+                    showColorButton: false,
+                    showBackgroundColorButton: false,
+                    showClearFormat: false,
+                    showStrikeThrough: false,
                     showSubscript: false,
                     showSuperscript: false,
                     showLink: false,
+                    showSearchButton: false,
+                    showClipboardCut: false,
+                    showClipboardCopy: false,
+                    showClipboardPaste: false,
+                    showUndo: false,
+                    showRedo: false,
                   ),
                 ),
               ),
@@ -337,7 +378,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey.shade400),
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(8),
+                  ),
                 ),
                 child: quill.QuillEditor(
                   controller: _quillController,
@@ -353,7 +396,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Hình ảnh đính kèm (Tùy chọn):', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Hình ảnh đính kèm (Tùy chọn):',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   ElevatedButton.icon(
                     onPressed: _pickImage,
                     icon: const Icon(Icons.add_a_photo),
@@ -364,7 +410,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               const SizedBox(height: 8),
 
               _imagePaths.isEmpty
-                  ? const Text('Chưa có ảnh nào được đính kèm.', style: TextStyle(color: Colors.grey))
+                  ? const Text(
+                      'Chưa có ảnh nào được đính kèm.',
+                      style: TextStyle(color: Colors.grey),
+                    )
                   : SizedBox(
                       height: 100,
                       child: ListView.builder(
@@ -389,11 +438,17 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                                 top: 0,
                                 right: 8,
                                 child: GestureDetector(
-                                  onTap: () => setState(() => _imagePaths.removeAt(index)),
+                                  onTap: () => setState(
+                                    () => _imagePaths.removeAt(index),
+                                  ),
                                   child: const CircleAvatar(
                                     radius: 12,
                                     backgroundColor: Colors.red,
-                                    child: Icon(Icons.close, size: 16, color: Colors.white),
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
