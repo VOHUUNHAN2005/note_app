@@ -1,6 +1,8 @@
 import 'dart:convert';
+
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -41,6 +43,26 @@ class _PrivateNoteDetailScreenState extends State<PrivateNoteDetailScreen> {
         document: doc,
         selection: const TextSelection.collapsed(offset: 0),
         readOnly: true,
+      );
+    }
+  }
+
+  void _copyContentToClipboard() {
+    final plainText = _quillController.document.toPlainText().trim();
+    if (plainText.isNotEmpty) {
+      Clipboard.setData(ClipboardData(text: plainText));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đã sao chép nội dung ghi chú!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nội dung rỗng, không thể sao chép!'),
+          duration: Duration(seconds: 2),
+        ),
       );
     }
   }
@@ -184,9 +206,61 @@ class _PrivateNoteDetailScreenState extends State<PrivateNoteDetailScreen> {
 
             const Divider(height: 32, thickness: 1),
 
-            // Nội dung Rich Text
-            quill.QuillEditor.basic(
-              controller: _quillController,
+            // Nội dung Rich Text kèm nút Copy góc trên phải
+            Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(top: 10),
+                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      textSelectionTheme: const TextSelectionThemeData(
+                        selectionColor: Colors.transparent,
+                      ),
+                    ),
+                    child: quill.QuillEditor.basic(
+                      controller: _quillController,
+                    ),
+                  ),
+                ),
+                // Nút Copy góc trên phải ô nội dung
+                Positioned(
+                  top: 10,
+                  right: 8,
+                  child: Tooltip(
+                    message: 'Sao chép nội dung',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: _copyContentToClipboard,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.copy_outlined,
+                          size: 18,
+                          color: Colors.purple,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

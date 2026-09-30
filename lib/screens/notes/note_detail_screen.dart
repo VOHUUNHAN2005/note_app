@@ -46,6 +46,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       );
     }
   }
+
   void _copyContentToClipboard() {
     final plainText = _quillController.document.toPlainText().trim();
     if (plainText.isNotEmpty) {
@@ -78,7 +79,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = DateFormat('dd/MM/yyyy - HH:mm').format(_currentNote.createdAt);
+    final formattedDate = DateFormat(
+      'dd/MM/yyyy - HH:mm',
+    ).format(_currentNote.createdAt);
 
     return Scaffold(
       appBar: AppBar(
@@ -93,7 +96,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               final updatedNote = await Navigator.push<Note>(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => NoteEditorScreen(note: _currentNote, topics: [],),
+                  builder: (context) =>
+                      NoteEditorScreen(note: _currentNote, topics: []),
                 ),
               );
 
@@ -112,13 +116,11 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Tiêu đề ghi chú
             Text(
-              _currentNote.title.isEmpty ? 'Không có tiêu đề' : _currentNote.title,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              _currentNote.title.isEmpty
+                  ? 'Không có tiêu đề'
+                  : _currentNote.title,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
 
@@ -134,7 +136,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                       _currentNote.topic!.name,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
-                    backgroundColor: _currentNote.topic!.color.withOpacity(0.15),
+                    backgroundColor: _currentNote.topic!.color.withOpacity(
+                      0.15,
+                    ),
                   ),
                   const SizedBox(width: 10),
                 ],
@@ -146,14 +150,16 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                 ),
               ],
             ),
-
-            // Đèn đính kèm Link Web (nếu có)
-            if (_currentNote.webUrl != null && _currentNote.webUrl!.isNotEmpty) ...[
+            if (_currentNote.webUrl != null &&
+                _currentNote.webUrl!.isNotEmpty) ...[
               const SizedBox(height: 12),
               InkWell(
                 onTap: () => _launchURL(_currentNote.webUrl!),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(8),
@@ -203,7 +209,10 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                           errorBuilder: (_, __, ___) => Container(
                             width: 140,
                             color: Colors.grey.shade300,
-                            child: const Icon(Icons.broken_image, color: Colors.grey),
+                            child: const Icon(
+                              Icons.broken_image,
+                              color: Colors.grey,
+                            ),
                           ),
                         ),
                       ),
@@ -216,61 +225,61 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             const Divider(height: 32, thickness: 1),
 
             Stack(
-  children: [
-    Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Theme(
-        // Loại bỏ hoàn toàn màu bôi đen/highlight nền xanh lá
-        data: Theme.of(context).copyWith(
-          textSelectionTheme: const TextSelectionThemeData(
-            selectionColor: Colors.transparent,
-          ),
-        ),
-        child: quill.QuillEditor.basic(
-          controller: _quillController,
-        ),
-      ),
-    ),
-    // Nút Copy góc trên phải ô nội dung
-    Positioned(
-      top: 20,
-      right: 8,
-      child: Tooltip(
-        message: 'Sao chép nội dung',
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: _copyContentToClipboard,
-          child: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+              children: [
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(top: 10),
+                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Theme(
+                    // Loại bỏ hoàn toàn màu bôi đen/highlight nền xanh lá
+                    data: Theme.of(context).copyWith(
+                      textSelectionTheme: const TextSelectionThemeData(
+                        selectionColor: Colors.transparent,
+                      ),
+                    ),
+                    child: quill.QuillEditor.basic(
+                      controller: _quillController,
+                    ),
+                  ),
+                ),
+                // Nút Copy góc trên phải ô nội dung
+                Positioned(
+                  top: 20,
+                  right: 8,
+                  child: Tooltip(
+                    message: 'Sao chép nội dung',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: _copyContentToClipboard,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.copy_outlined,
+                          size: 18,
+                          color: Colors.blueAccent,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.copy_outlined,
-              size: 18,
-              color: Colors.blueAccent,
-            ),
-          ),
-        ),
-      ),
-    ),
-  ],
-)
           ],
         ),
       ),
