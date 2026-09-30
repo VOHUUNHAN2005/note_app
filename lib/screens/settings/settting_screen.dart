@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:note_app/services/security_service.dart';
 import 'package:note_app/services/settings_service.dart';
+import 'package:note_app/trash/trash_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -50,7 +51,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!hasPassword) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bạn chưa thiết lập mật khẩu riêng tư!')),
+          const SnackBar(
+            content: Text('Bạn chưa thiết lập mật khẩu riêng tư!'),
+          ),
         );
       }
       return;
@@ -77,7 +80,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       border: OutlineInputBorder(),
                     ),
                     validator: (val) {
-                      if (val == null || val.isEmpty) return 'Vui lòng nhập mật khẩu cũ';
+                      if (val == null || val.isEmpty)
+                        return 'Vui lòng nhập mật khẩu cũ';
                       return null;
                     },
                   ),
@@ -100,7 +104,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       border: OutlineInputBorder(),
                     ),
                     validator: (val) {
-                      if (val != _newPwdController.text) return 'Mật khẩu không khớp';
+                      if (val != _newPwdController.text)
+                        return 'Mật khẩu không khớp';
                       return null;
                     },
                   ),
@@ -116,7 +121,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ElevatedButton(
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
-                  final isOldCorrect = await SecurityService.instance.verifyPassword(_oldPwdController.text);
+                  final isOldCorrect = await SecurityService.instance
+                      .verifyPassword(_oldPwdController.text);
                   if (!isOldCorrect) {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -129,7 +135,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     return;
                   }
 
-                  await SecurityService.instance.savePassword(_newPwdController.text);
+                  await SecurityService.instance.savePassword(
+                    _newPwdController.text,
+                  );
                   _oldPwdController.clear();
                   _newPwdController.clear();
                   _confirmPwdController.clear();
@@ -153,9 +161,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cài đặt Cá nhân'),
-      ),
+      appBar: AppBar(title: const Text('Cài đặt Cá nhân')),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
@@ -197,6 +203,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('Đổi mật khẩu khóa vùng bí mật'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: _showChangePasswordDialog,
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete_outline, color: Colors.orange),
+            title: const Text('Thùng rác'),
+            subtitle: const Text('Ghi chú đã xóa'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const TrashScreen(), // Chuyển sang màn hình Thùng rác
+                ),
+              );
+            },
           ),
         ],
       ),

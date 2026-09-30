@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
@@ -52,8 +53,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       _imagePaths = List.from(widget.note!.imagePaths);
 
       if (widget.note!.content.isNotEmpty) {
-        _quillController.document = quill.Document()
-          ..insert(0, widget.note!.content);
+        try {
+          final jsonDelta = jsonDecode(widget.note!.content);
+          _quillController.document = quill.Document.fromJson(jsonDelta);
+        } catch (_) {
+          _quillController.document = quill.Document()
+            ..insert(0, widget.note!.content);
+        }
       }
     }
   }
@@ -197,12 +203,13 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     }
 
     final title = _titleController.text.trim();
-    final content = _quillController.document.toPlainText().trim();
+    final content = jsonEncode(_quillController.document.toDelta().toJson());
+    final plainTextContent = _quillController.document.toPlainText().trim();
     final webUrl = _webUrlController.text.trim().isEmpty
         ? null
         : _webUrlController.text.trim();
 
-    if (content.isEmpty) {
+    if (plainTextContent.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Nội dung ghi chú không được để trống!')),
       );

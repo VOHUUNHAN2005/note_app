@@ -51,6 +51,7 @@ class _TopicsListScreenState extends State<TopicsListScreen> {
     Colors.teal,
     Colors.orange,
   ];
+
   void _showAddTopicDialog() {
     final nameController = TextEditingController();
     Color selectedColor = _availableColors[0];
@@ -62,43 +63,49 @@ class _TopicsListScreenState extends State<TopicsListScreen> {
           builder: (context, setDialogState) {
             return AlertDialog(
               title: const Text('Thêm chủ đề mới'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Tên chủ đề',
-                      border: OutlineInputBorder(),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tên chủ đề *',
+                        border: OutlineInputBorder(),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Chọn màu đại diện:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: _availableColors.map((color) {
-                      return GestureDetector(
-                        onTap: () => setDialogState(() => selectedColor = color),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: selectedColor == color ? Colors.black : Colors.transparent,
-                              width: 3,
+                    const SizedBox(height: 16),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Chọn màu đại diện:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: _availableColors.map((color) {
+                        return GestureDetector(
+                          onTap: () =>
+                              setDialogState(() => selectedColor = color),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: selectedColor == color
+                                    ? Colors.black
+                                    : Colors.transparent,
+                                width: 3,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -124,6 +131,90 @@ class _TopicsListScreenState extends State<TopicsListScreen> {
                     if (mounted) Navigator.pop(context);
                   },
                   child: const Text('Lưu'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // BỔ SUNG: Dialog chỉnh sửa chủ đề
+  void _showEditTopicDialog(Topic topic) {
+    final nameController = TextEditingController(text: topic.name);
+    Color selectedColor = topic.color;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Chỉnh sửa chủ đề'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tên chủ đề *',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Màu đại diện:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: _availableColors.map((color) {
+                        return GestureDetector(
+                          onTap: () =>
+                              setDialogState(() => selectedColor = color),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: selectedColor == color
+                                    ? Colors.black
+                                    : Colors.transparent,
+                                width: 3,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Hủy'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (nameController.text.trim().isEmpty) return;
+
+                    topic.name = nameController.text.trim();
+                    topic.color = selectedColor;
+
+                    await DatabaseHelper.instance.updateTopic(topic);
+
+                    setState(() {}); // Cập nhật lại UI
+
+                    if (mounted) Navigator.pop(context);
+                  },
+                  child: const Text('Cập nhật'),
                 ),
               ],
             );
@@ -187,11 +278,23 @@ class _TopicsListScreenState extends State<TopicsListScreen> {
                     ),
                     title: Text(
                       topic.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      onPressed: () => _deleteTopic(topic),
+                    // BỔ SUNG: Nút Sửa nằm cùng Row với nút Xóa
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => _showEditTopicDialog(topic),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.red),
+                          onPressed: () => _deleteTopic(topic),
+                        ),
+                      ],
                     ),
                   ),
                 );

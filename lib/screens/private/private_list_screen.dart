@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:intl/intl.dart';
 import 'package:note_app/database/db_helper.dart';
+import 'package:note_app/screens/private/private_note_detail_screen.dart'; // IMPORT FILE XEM CHI TIẾT
 import 'package:note_app/screens/private/private_note_editor_screen.dart';
 import 'package:note_app/services/security_service.dart';
 
@@ -178,13 +182,44 @@ class _PrivateListScreenState extends State<PrivateListScreen>
   }
 
   String _formatContent(String content) {
-    if (content.length <= 20) return content;
-    return '${content.substring(0, 20)}...';
+    String plainText = content;
+    try {
+      final jsonContent = jsonDecode(content);
+      plainText = quill.Document.fromJson(jsonContent).toPlainText().trim();
+    } catch (_) {
+      plainText = content.trim();
+    }
+
+    if (plainText.length <= 30) return plainText;
+    return '${plainText.substring(0, 30)}...';
   }
 
-  void _deletePrivateNote(String id) async {
-    await DatabaseHelper.instance.deletePrivateNote(id);
-    _loadPrivateNotes();
+  Future<void> _deletePrivateNote(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Bỏ vào thùng rác'),
+        content: const Text(
+          'Bạn có muốn chuyển ghi chú riêng tư này vào thùng rác không?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Chuyển', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await DatabaseHelper.instance.moveToTrashPrivateNote(id);
+      _loadPrivateNotes();
+    }
   }
 
   @override
@@ -309,72 +344,86 @@ class _PrivateListScreenState extends State<PrivateListScreen>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                note.title,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.redAccent,
-                              ),
-                              onPressed: () => _deletePrivateNote(note.id),
-                            ),
-                          ],
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    // NHẤN VÀO CARD ĐỂ XEM CHI TIẾT GHI CHÚ RIÊNG TƯ
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PrivateNoteDetailScreen(note: note),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _formatContent(note.content),
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Tạo lúc: $formattedDate',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-
-                            IconButton(
-                              onPressed: () async {
-                                final updated = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        PrivateNoteEditorScreen(note: note),
+                      );
+                      _loadPrivateNotes();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  note.title.isEmpty ? 'Không có tiêu đề' : note.title,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                );
-                                if (updated == true) {
-                                  _loadPrivateNotes();
-                                }
-                              },
-                              icon: Icon(Icons.edit, color: Colors.blue),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.redAccent,
+                                ),
+                                onPressed: () => _deletePrivateNote(note.id),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _formatContent(note.content),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              color: Colors.black87,
                             ),
-                          ],
-                        ),
-                      ],
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Tạo lúc: $formattedDate',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () async {
+                                  final updated = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          PrivateNoteEditorScreen(note: note),
+                                    ),
+                                  );
+                                  if (updated == true) {
+                                    _loadPrivateNotes();
+                                  }
+                                },
+                                icon: const Icon(Icons.edit, color: Colors.blue),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
