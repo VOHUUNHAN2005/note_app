@@ -11,6 +11,14 @@ import 'package:sqflite/sqflite.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final isFirstRun = prefs.getBool('is_first_run_after_install') ?? true;
+
+  if (isFirstRun) {
+    const storage = FlutterSecureStorage();
+    await storage.deleteAll();
+    await prefs.setBool('is_first_run_after_install', false);
+  }
   final isDark = await SettingsService.isDarkMode();
   final fontSize = await SettingsService.getFontSize();
 
